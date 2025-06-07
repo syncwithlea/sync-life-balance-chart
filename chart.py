@@ -21,6 +21,10 @@ def generate_chart(scores, categories):
     ax.spines["polar"].set_visible(True)
     ax.grid(color='#cccccc', linestyle='--', linewidth=0.5)
 
+    ax.set_yticks(range(1, 11))  # 1 through 10
+    ax.set_ylim(0, 10)           # ensure full scale is shown
+
+
     filename = f"{uuid.uuid4().hex}.png"
     path = os.path.join("/tmp", filename)
     plt.savefig(path, bbox_inches='tight', dpi=150)
