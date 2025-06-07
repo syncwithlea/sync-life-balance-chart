@@ -1,32 +1,50 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
-import os
-import uuid
+import re
 
-def generate_chart(scores, categories):
-    N = len(scores)
-    angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
-    scores += scores[:1]
-    angles += angles[:1]
+# Read data from CSV
+df = pd.read_csv("data.csv")
 
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-    ax.fill(angles, scores, color='#f4e4cf', alpha=0.5)
-    ax.plot(angles, scores, color='#df8f43', linewidth=2)
+# Use the latest submission (last row)
+latest = df.iloc[-1]
 
-    ax.set_yticklabels([])
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(categories, fontsize=9, fontweight='bold', color='#2b2b2b')
-    ax.set_title("SYNC Life Balance Snapshot", size=14, weight='bold', y=1.08)
+# Extract categories and values
+categories = []
+values = []
 
-    ax.spines["polar"].set_visible(True)
-    ax.grid(color='#cccccc', linestyle='--', linewidth=0.5)
+for column in df.columns:
+    match = re.match(r'\d+\.\s*(.*?)\s*How', column)
+    if match:
+        category = match.group(1).strip()
+        categories.append(category)
+        values.append(latest[column])
 
-    ax.set_yticks(range(1, 11))  # 1 through 10
-    ax.set_ylim(0, 10)           # ensure full scale is shown
+# Complete the loop for radar chart
+values += values[:1]
+categories += categories[:1]
 
+# Number of variables
+N = len(categories)
 
-    filename = f"{uuid.uuid4().hex}.png"
-    path = os.path.join("/tmp", filename)
-    plt.savefig(path, bbox_inches='tight', dpi=150)
-    plt.close()
-    return path
+# Calculate angle for each axis
+angles = [n / float(N) * 2 * np.pi for n in range(N)]
+
+# Initialize radar chart
+fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+
+# Draw the outline
+ax.set_theta_offset(np.pi / 2)
+ax.set_theta_direction(-1)
+ax.set_rlabel_position(0)
+ax.set_ylim(0, 10)
+ax.set_yticks(range(1, 11))
+ax.set_xticks(angles[:-1])
+ax.set_xticklabels(categories, fontsize=10)
+
+# Plot the values
+ax.plot(angles, values, linewidth=2, linestyle='solid')
+ax.fill(angles, values, alpha=0.3)
+
+# Save chart
+plt.savefig("life_balance_chart.png")
