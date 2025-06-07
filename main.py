@@ -11,36 +11,23 @@ def home():
 def chart():
     data = request.json
     try:
-        category_score_map = {}
+        # We start reading from column index 5 (i.e., column F in your sheet)
+        row_keys = list(data.keys())[5:]
+        categories = []
+        scores = []
 
-        for k, v in data.items():
-            # Skip metadata fields like "Submitted at"
-            if not isinstance(v, (int, float, str)):
-                continue
-
-            # Only process values that are probably numeric
+        for key in row_keys:
+            # Extract the category name: after the number + ". ", before double space
             try:
-                score = float(v)
-            except:
-                continue
+                label = key.split(". ", 1)[1].split("  ", 1)[0].strip()
+                if label.isupper():
+                    categories.append(label)
+                    scores.append(float(data[key]))
+            except (IndexError, ValueError):
+                continue  # Skip malformed columns
 
-            # Remove number prefix like "1. "
-            cleaned_key = k.strip()
-            if ". " in cleaned_key:
-                cleaned_key = cleaned_key.split(". ", 1)[1]
-            elif "." in cleaned_key:
-                cleaned_key = cleaned_key.split(".", 1)[1]
-
-            # Split before "How" if it exists
-            if "How" in cleaned_key:
-                category = cleaned_key.split("How", 1)[0].strip()
-            else:
-                category = cleaned_key.strip()
-
-            category_score_map[category.upper()] = score
-
-        scores = list(category_score_map.values())
-        categories = list(category_score_map.keys())
+        if len(categories) != len(scores):
+            return {"error": "Mismatch between categories and scores"}, 400
 
         path = generate_chart(scores, categories)
         return send_file(path, mimetype='image/png')
