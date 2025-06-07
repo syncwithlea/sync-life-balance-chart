@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import re
 
-# Read data from CSV
-#df = pd.read_csv("data.csv")
 
 # Use the latest submission (last row)
 latest = df.iloc[-1]
